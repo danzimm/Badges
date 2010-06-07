@@ -1,0 +1,4 @@
+*.dylib
+*.deb
+.DS_Store
+obj
