@@ -3,13 +3,21 @@
 #import <SpringBoard/SBUIController.h>
 #import "UIModalView.h"
 
+static BOOL isJittering = NO;
+
 %hook SBIcon
+
+-(void)setIsJittering:(BOOL)jittering
+{
+	isJittering = jittering;
+	%orig;
+}
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
 	%orig;
 	UITouch *touch = [touches anyObject];
-	if (touch.tapCount == 2) {
+	if (touch.tapCount == 2 && isJittering) {
 		NSString *message = [NSString stringWithFormat:@"Set the new badge for %@. Or click cancel to cancel", [self displayName]];
 		UIModalView *badgeAlert = [[UIModalView alloc] initWithTitle:@"Set New Badge" buttons:[NSArray arrayWithObjects:@"Cancel", @"Clear", @"Okay", nil] defaultButtonIndex:0 delegate:self context:NULL];
 		[badgeAlert setBodyText:message];
@@ -56,7 +64,7 @@
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.zimm.badges.plist"] ?: [[NSMutableDictionary alloc] init];
 	if (![prefs objectForKey:@"2.0"]) {
 		UIModalView *welcomeBadge = [[UIModalView alloc] initWithTitle:@"Welcome to badges 2.0!" buttons:[NSArray arrayWithObjects:@"Okay", nil] defaultButtonIndex:0 delegate:nil context:NULL];
-		[welcomeBadge setBodyText:@"Welcome! To set a badge on an app just tap and hold any icon to get it into a jittering mode, then double tap whatever icon you want. This will being a popup allowing you to set the badge, or clear it! If you ever forget this is always in the Settings.app"];
+		[welcomeBadge setBodyText:@"Welcome! To set a badge on an app just tap and hold any icon to get it into a jittering mode, then triple tap whatever icon you want. This will being a popup allowing you to set the badge, or clear it! If you ever forget this is always in the Settings.app"];
 		[welcomeBadge popupAlertAnimated:YES];
 		[welcomeBadge release];
 		[prefs setObject:@"Hi" forKey:@"2.0"];
