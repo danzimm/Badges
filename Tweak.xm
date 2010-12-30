@@ -5,6 +5,44 @@
 
 static BOOL isJittering = NO;
 
+@interface BDBadgeDelegate : NSObject <UIModalViewDelegate> {
+	SBIcon *_icon;
+}
++ (id)delegateWithIcon:(SBIcon *)icon;
+- (id)initWithIcon:(SBIcon *)icon;
+@end
+@implementation BDBadgeDelegate
++ (id)delegateWithIcon:(SBIcon *)icon
+{
+	return [[[self alloc] initWithIcon:icon] autorelease];
+}
+
+- (id)initWithIcon:(SBIcon *)icon
+{
+	if ((self = [super init]) != nil) {
+		_icon = icon;
+	}
+	return self;
+}
+
+-(void)modalView:(id)view didDismissWithButtonIndex:(int)buttonIndex
+{
+	UIModalView *view1 = (UIModalView *)view;
+	UITextField *badgeField = [view textFieldAtIndex:0];
+	switch (buttonIndex) {
+		case 2:
+			[_icon setBadge:[badgeField text]];
+			break;
+		case 1:
+			[_icon setBadge:nil];
+			break;
+		default:
+			break;
+	}
+	[self release];
+}
+@end
+
 %hook SBIcon
 
 -(void)setIsJittering:(BOOL)jittering
@@ -19,7 +57,7 @@ static BOOL isJittering = NO;
 	UITouch *touch = [touches anyObject];
 	if (touch.tapCount == 2 && isJittering) {
 		NSString *message = [NSString stringWithFormat:@"Set the new badge for %@. Or click cancel to cancel", [self displayName]];
-		UIModalView *badgeAlert = [[UIModalView alloc] initWithTitle:@"Set New Badge" buttons:[NSArray arrayWithObjects:@"Cancel", @"Clear", @"Okay", nil] defaultButtonIndex:0 delegate:self context:NULL];
+		UIModalView *badgeAlert = [[UIModalView alloc] initWithTitle:@"Set New Badge" buttons:[NSArray arrayWithObjects:@"Cancel", @"Clear", @"Okay", nil] defaultButtonIndex:0 delegate:[BDBadgeDelegate delegateWithIcon:self] context:NULL];
 		[badgeAlert setBodyText:message];
 		[badgeAlert setNumberOfRows:1];
 		[badgeAlert addTextFieldWithValue:@"" label:@"newbadgevalue"];
@@ -32,26 +70,6 @@ static BOOL isJittering = NO;
 		[badgeAlert popupAlertAnimated:YES];
 		[badgeAlert release];
 	}
-}
-
-%new(v@:@i)
--(void)modalView:(id)view didDismissWithButtonIndex:(int)buttonIndex
-{
-	UIModalView *view1 = (UIModalView *)view;
-	if ([view1.title isEqualToString:@"Set New Badge"]) {
-		UITextField *badgeField = [view textFieldAtIndex:0];
-		switch (buttonIndex) {
-			case 2:
-				[self setBadge:[badgeField text]];
-				break;
-			case 1:
-				[self setBadge:nil];
-				break;
-			default:
-				break;
-		}
-	} else
-		%orig;
 }
 
 %end
