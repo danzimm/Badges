@@ -2,10 +2,20 @@
 #import <SpringBoard/SBIconBadge.h>
 #import <SpringBoard/SBUIController.h>
 #import "UIModalView.h"
+#import <objc/runtime.h>
+#import <SpringBoard/SBIconModel.h>
+
+
+@interface SBIconModel (pfour)
+- (SBIcon *)leafIconForIdentifier:(NSString *)ident;
+@end
+@interface SBIcon (four)
+- (NSString *)leafIdentifier;
+@end
 
 static BOOL isJittering = NO;
 
-@interface BDBadgeDelegate : NSObject <UIModalViewDelegate> {
+@interface BDBadgeDelegate : NSObject {
 	SBIcon *_icon;
 }
 + (id)delegateWithIcon:(SBIcon *)icon;
@@ -14,7 +24,7 @@ static BOOL isJittering = NO;
 @implementation BDBadgeDelegate
 + (id)delegateWithIcon:(SBIcon *)icon
 {
-	return [[[self alloc] initWithIcon:icon] autorelease];
+	return [[self alloc] initWithIcon:icon];
 }
 
 - (id)initWithIcon:(SBIcon *)icon
@@ -27,7 +37,6 @@ static BOOL isJittering = NO;
 
 -(void)modalView:(id)view didDismissWithButtonIndex:(int)buttonIndex
 {
-	UIModalView *view1 = (UIModalView *)view;
 	UITextField *badgeField = [view textFieldAtIndex:0];
 	switch (buttonIndex) {
 		case 2:
@@ -41,6 +50,7 @@ static BOOL isJittering = NO;
 	}
 	[self release];
 }
+
 @end
 
 %hook SBIcon
@@ -80,12 +90,12 @@ static BOOL isJittering = NO;
 {
 	%orig;
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.zimm.badges.plist"] ?: [[NSMutableDictionary alloc] init];
-	if (![prefs objectForKey:@"2.0"]) {
-		UIModalView *welcomeBadge = [[UIModalView alloc] initWithTitle:@"Welcome to badges 2.0!" buttons:[NSArray arrayWithObjects:@"Okay", nil] defaultButtonIndex:0 delegate:nil context:NULL];
+	if (![prefs objectForKey:@"2.2"]) {
+		UIModalView *welcomeBadge = [[UIModalView alloc] initWithTitle:@"Welcome to badges 2.2.1!" buttons:[NSArray arrayWithObjects:@"Okay", nil] defaultButtonIndex:0 delegate:nil context:NULL];
 		[welcomeBadge setBodyText:@"Welcome! To set a badge on an app just tap and hold any icon to get it into a jittering mode, then triple tap whatever icon you want. This will being a popup allowing you to set the badge, or clear it! If you ever forget this is always in the Settings.app"];
 		[welcomeBadge popupAlertAnimated:YES];
 		[welcomeBadge release];
-		[prefs setObject:@"Hi" forKey:@"2.0"];
+		[prefs setObject:@"Hi" forKey:@"2.2"];
 		[prefs writeToFile:@"/var/mobile/Library/Preferences/com.zimm.badges.plist" atomically:YES];
 	}
 	[prefs release];
